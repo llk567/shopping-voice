@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>Shopping Voice Test</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px;
+    }
+
+    h1 {
+      font-size: 32px;
+    }
+
+    #micButton {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: none;
+      font-size: 70px;
+      margin-top: 30px;
+      cursor: pointer;
+    }
+
+    #status {
+      font-size: 22px;
+      margin-top: 30px;
+    }
+
+    #heard {
+      font-size: 26px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+
+<body>
+
+  <h1>Shopping Voice</h1>
+
+  <p>Tap the microphone and speak.</p>
+
+  <button
+    id="micButton"
+    onclick="startListening()"
+  >
+    🎤
+  </button>
+
+  <div id="status">
+    Ready
+  </div>
+
+  <div id="heard"></div>
+
+
+  <script>
+
+    function startListening() {
+
+      const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+
+        document
+          .getElementById("status")
+          .innerText =
+            "Speech recognition is not supported by this browser.";
+
+        return;
+      }
+
+
+      const recognition =
+        new SpeechRecognition();
+
+      recognition.lang = "en-AU";
+
+      recognition.interimResults = false;
+
+      recognition.maxAlternatives = 1;
+
+
+      recognition.onstart =
+        function() {
+
+          document
+            .getElementById("status")
+            .innerText =
+              "Listening...";
+        };
+
+
+      recognition.onresult =
+        function(event) {
+
+          const text =
+            event.results[0][0].transcript;
+
+          document
+            .getElementById("heard")
+            .innerText =
+              text;
+
+          document
+            .getElementById("status")
+            .innerText =
+              "Heard:";
+        };
+
+
+      recognition.onerror =
+        function(event) {
+
+          document
+            .getElementById("status")
+            .innerText =
+              "Error: " + event.error;
+        };
+
+
+      recognition.onend =
+        function() {
+
+          if (
+            document
+              .getElementById("status")
+              .innerText ===
+            "Listening..."
+          ) {
+
+            document
+              .getElementById("status")
+              .innerText =
+                "Ready";
+          }
+        };
+
+
+      recognition.start();
+    }
+
+  </script>
+
+</body>
+
+</html>
