@@ -42,6 +42,12 @@
       margin-top: 20px;
       font-weight: bold;
     }
+
+    #result {
+      font-size: 24px;
+      margin-top: 25px;
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -65,8 +71,14 @@
 
   <div id="heard"></div>
 
+  <div id="result"></div>
+
 
   <script>
+
+    const SCRIPT_URL =
+      "https://script.google.com/macros/s/AKfycbxh83hFWKIbgYIbOaDhqQy9jP6AFeRVZ8K_rkqkZJl6pCWALtV84XZqfPAoTn379xBf/exec";
+
 
     function startListening() {
 
@@ -102,6 +114,16 @@
             .getElementById("status")
             .innerText =
               "Listening...";
+
+          document
+            .getElementById("heard")
+            .innerText =
+              "";
+
+          document
+            .getElementById("result")
+            .innerText =
+              "";
         };
 
 
@@ -120,6 +142,8 @@
             .getElementById("status")
             .innerText =
               "Heard:";
+
+          sendCommand(text);
         };
 
 
@@ -152,6 +176,56 @@
 
 
       recognition.start();
+    }
+
+
+    // --------------------------------------------------
+    // Send recognised speech to Google Apps Script
+    // --------------------------------------------------
+
+    function sendCommand(command) {
+
+      document
+        .getElementById("result")
+        .innerText =
+          "Updating shopping list...";
+
+
+      const url =
+        SCRIPT_URL +
+        "?command=" +
+        encodeURIComponent(command);
+
+
+      fetch(url)
+
+        .then(
+          response =>
+            response.json()
+        )
+
+        .then(
+          data => {
+
+            document
+              .getElementById("result")
+              .innerText =
+                data.result ||
+                "Done";
+          }
+        )
+
+        .catch(
+          error => {
+
+            document
+              .getElementById("result")
+              .innerText =
+                "Could not update shopping list";
+
+            console.error(error);
+          }
+        );
     }
 
   </script>
