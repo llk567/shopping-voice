@@ -183,50 +183,62 @@
     // Send recognised speech to Google Apps Script
     // --------------------------------------------------
 
-    function sendCommand(command) {
+function sendCommand(command) {
+
+  document
+    .getElementById("result")
+    .innerText =
+      "Updating shopping list...";
+
+  const callbackName =
+    "shoppingCallback_" +
+    Date.now();
+
+  window[callbackName] =
+    function(data) {
 
       document
         .getElementById("result")
         .innerText =
-          "Updating shopping list...";
+          data.result ||
+          "Done";
+
+      delete window[callbackName];
+
+      script.remove();
+    };
 
 
-      const url =
-        SCRIPT_URL +
-        "?command=" +
-        encodeURIComponent(command);
+  const script =
+    document.createElement("script");
 
 
-      fetch(url)
+  script.src =
+    SCRIPT_URL +
+    "?command=" +
+    encodeURIComponent(command) +
+    "&callback=" +
+    callbackName;
 
-        .then(
-          response =>
-            response.json()
-        )
 
-        .then(
-          data => {
+  script.onerror =
+    function() {
 
-            document
-              .getElementById("result")
-              .innerText =
-                data.result ||
-                "Done";
-          }
-        )
+      document
+        .getElementById("result")
+        .innerText =
+          "Could not update shopping list";
 
-        .catch(
-          error => {
+      delete window[callbackName];
 
-            document
-              .getElementById("result")
-              .innerText =
-                "Could not update shopping list";
+      script.remove();
+    };
 
-            console.error(error);
-          }
-        );
-    }
+
+  document
+    .body
+    .appendChild(script);
+}
 
   </script>
 
