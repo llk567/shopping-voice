@@ -72,7 +72,15 @@
   <div id="heard"></div>
 
   <div id="result"></div>
+<div id="shoppingSection">
 
+  <h2>To Buy</h2>
+
+  <div id="shoppingList">
+    Loading...
+  </div>
+
+</div>
 
   <script>
 
@@ -239,6 +247,79 @@ function sendCommand(command) {
     .body
     .appendChild(script);
 }
+function loadShoppingList() {
+
+  const callbackName =
+    "listCallback_" +
+    Date.now();
+
+  window[callbackName] =
+    function(data) {
+
+      const list =
+        document.getElementById(
+          "shoppingList"
+        );
+
+      list.innerHTML = "";
+
+      if (
+        !data.items ||
+        data.items.length === 0
+      ) {
+        list.innerText =
+          "Nothing to buy";
+      } else {
+
+        for (const item of data.items) {
+
+          const row =
+            document.createElement("div");
+
+          row.innerText = item;
+
+          list.appendChild(row);
+        }
+      }
+
+      delete window[callbackName];
+
+      script.remove();
+    };
+
+
+  const script =
+    document.createElement("script");
+
+  script.src =
+    SCRIPT_URL +
+    "?action=getList" +
+    "&callback=" +
+    callbackName;
+
+  script.onerror =
+    function() {
+
+      document
+        .getElementById("shoppingList")
+        .innerText =
+          "Could not load shopping list";
+
+      delete window[callbackName];
+
+      script.remove();
+    };
+
+  document
+    .body
+    .appendChild(script);
+}
+
+
+window.addEventListener(
+  "load",
+  loadShoppingList
+);
 
   </script>
 
