@@ -214,6 +214,7 @@ function sendCommand(command) {
       delete window[callbackName];
 
       script.remove();
+      loadShoppingList();
     };
 
 
@@ -273,13 +274,32 @@ function loadShoppingList() {
 
         for (const item of data.items) {
 
-          const row =
-            document.createElement("div");
+  const row =
+    document.createElement("div");
 
-          row.innerText = item;
+  const checkbox =
+    document.createElement("input");
 
-          list.appendChild(row);
-        }
+  checkbox.type = "checkbox";
+
+  checkbox.onchange =
+    function() {
+
+      if (checkbox.checked) {
+        completeItem(item);
+      }
+    };
+
+  const label =
+    document.createElement("span");
+
+  label.innerText = item;
+
+  row.appendChild(checkbox);
+  row.appendChild(label);
+
+  list.appendChild(row);
+}
       }
 
       delete window[callbackName];
@@ -314,7 +334,57 @@ function loadShoppingList() {
     .body
     .appendChild(script);
 }
+function completeItem(item) {
 
+  const callbackName =
+    "completeCallback_" +
+    Date.now();
+
+  window[callbackName] =
+    function(data) {
+
+      delete window[callbackName];
+
+      script.remove();
+
+      if (data.success) {
+        loadShoppingList();
+      }
+    };
+
+
+  const script =
+    document.createElement("script");
+
+  script.src =
+    SCRIPT_URL +
+    "?action=complete" +
+    "&item=" +
+    encodeURIComponent(item) +
+    "&callback=" +
+    callbackName;
+
+
+  script.onerror =
+    function() {
+
+      document
+        .getElementById("result")
+        .innerText =
+          "Could not update item";
+
+      delete window[callbackName];
+
+      script.remove();
+
+      loadShoppingList();
+    };
+
+
+  document
+    .body
+    .appendChild(script);
+}
 
 window.addEventListener(
   "load",
