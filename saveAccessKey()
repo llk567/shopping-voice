@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>Shopping Voice Test</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      background: #ffffff;
+      color: #222222;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin: 5px 0 4px;
+      text-align: center;
+    }
+
+    body > p {
+      margin: 0 0 12px;
+      text-align: center;
+      color: #666666;
+    }
+
+    #micButton {
+      display: block;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: none;
+      font-size: 42px;
+      margin: 18px auto 12px;
+      cursor: pointer;
+    }
+
+    #status {
+      font-size: 16px;
+      margin-top: 8px;
+      text-align: center;
+      color: #666666;
+    }
+
+    #heard {
+      font-size: 18px;
+      margin-top: 8px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    #result {
+      font-size: 17px;
+      margin-top: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    #shoppingSection {
+      margin-top: 16px;
+    }
+
+    #shoppingSection h2 {
+      font-size: 24px;
+      margin: 0 0 10px;
+      text-align: left;
+    }
+
+    #shoppingList {
+      border-top: 1px solid #dddddd;
+    }
+
+    #shoppingList > div {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 8px 4px;
+      border-bottom: 1px solid #dddddd;
+      font-size: 20px;
+      text-align: left;
+    }
+
+    #shoppingList input[type="checkbox"] {
+      width: 26px;
+      height: 26px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    #shoppingList span {
+      flex: 1;
+    }
+
+    #accessMessage {
+      margin-top: 12px;
+      text-align: center;
+      color: #b00020;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+
+<body>
+
+  <div id="accessSection">
+
+    <h1>Shopping Voice</h1>
+
+    <p>Enter the family access key.</p>
+
+    <input
+      id="accessKeyInput"
+      type="password"
+      autocomplete="current-password"
+      placeholder="Family access key"
+      style="
+        width: 100%;
+        padding: 12px;
+        font-size: 18px;
+        margin-top: 20px;
+      "
+    >
+
+    <button
+      id="continueButton"
+      onclick="saveAccessKey()"
+      style="
+        width: 100%;
+        padding: 12px;
+        font-size: 18px;
+        margin-top: 10px;
+      "
+    >
+      Continue
+    </button>
+
+    <div id="accessMessage"></div>
+
+  </div>
+
+
+  <div
+    id="appSection"
+    style="display:none;"
+  >
+
+    <h1>Shopping Voice</h1>
+
+    <p>
+      Tap the microphone and speak.
+    </p>
+
+    <button
+      id="micButton"
+      onclick="startListening()"
+    >
+      🎤
+    </button>
+
+    <div id="status">
+      Ready
+    </div>
+
+    <div id="heard"></div>
+
+    <div id="result"></div>
+
+
+    <div id="shoppingSection">
+
+      <h2>To Buy</h2>
+
+      <div id="shoppingList">
+        Loading...
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    const SCRIPT_URL =
+      "https://script.google.com/macros/s/AKfycbxh83hFWKIbgYIbOaDhqQy9jP6AFeRVZ8K_rkqkZJl6pCWALtV84XZqfPAoTn379xBf/exec";
+
+
+    let familyAccessKey =
+      sessionStorage.getItem(
+        "shoppingFamilyAccessKey"
+      ) || "";
+
+
+    // --------------------------------------------------
+    // Access screen
+    // --------------------------------------------------
+
+    function showAccessScreen(message = "") {
+
+      document
+        .getElementById("accessSection")
+        .style.display =
+          "block";
+
+      document
+        .getElementById("appSection")
+        .style.display =
+          "none";
+
+      document
+        .getElementById("accessMessage")
+        .innerText =
+          message;
+
+      document
+        .getElementById("accessKeyInput")
+        .disabled =
+          false;
+
+      document
+        .getElementById("continueButton")
+        .disabled =
+          false;
+    }
+
+
+    function showApp() {
+
+      document
+        .getElementById("accessSection")
+        .style.display =
+          "none";
+
+      document
+        .getElementById("appSection")
+        .style.display =
+          "block";
+    }
+
+
+    function clearAccessKey() {
+
+      familyAccessKey = "";
+
+      sessionStorage.removeItem(
+        "shoppingFamilyAccessKey"
+      );
+
+      document
+        .getElementById("accessKeyInput")
+        .value =
+          "";
+    }
+
+
+    function saveAccessKey() {
+
+      const key =
+        document
+          .getElementById("accessKeyInput")
+          .value
+          .trim();
+
+      if (!key) {
+
+        document
+          .getElementById("accessMessage")
+          .innerText =
+            "Please enter the family access key.";
+
+        return;
+      }
+
+
+      familyAccessKey = key;
+
+
+      document
+        .getElementById("accessMessage")
+        .innerText =
+          "Checking access key...";
+
+      document
+        .getElementById("accessKeyInput")
+        .disabled =
+          true;
+
+      document
+        .getElementById("continueButton")
+        .disabled =
+          true;
+
+
+      // Do NOT enter the app yet.
+      // First verify the key against Apps Script.
+
+      loadShoppingList(true);
+    }
+
+
+    // --------------------------------------------------
+    // Speech recognition
+    // --------------------------------------------------
+
+    function startListening() {
+
+      const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+
+      if (!SpeechRecognition) {
+
+        document
+          .getElementById("status")
+          .innerText =
+            "Speech recognition is not supported by this browser.";
+
+        return;
+      }
+
+
+      const recognition =
+        new SpeechRecognition();
+
+      recognition.lang =
+        "en-AU";
+
+      recognition.interimResults =
+        false;
+
+      recognition.maxAlternatives =
+        1;
+
+
+      recognition.onstart =
+        function() {
+
+          document
+            .getElementById("status")
+            .innerText =
+              "Listening...";
+
+          document
+            .getElementById("heard")
+            .innerText =
+              "";
+
+          document
+            .getElementById("result")
+            .innerText =
+              "";
+        };
+
+
+      recognition.onresult =
+        function(event) {
+
+          const text =
+            event.results[0][0].transcript;
+
+          document
+            .getElementById("heard")
+            .innerText =
+              text;
+
+          document
+            .getElementById("status")
+            .innerText =
+              "Heard:";
+
+          sendCommand(text);
+        };
+
+
+      recognition.onerror =
+        function(event) {
+
+          document
+            .getElementById("status")
+            .innerText =
+              "Error: " +
+              event.error;
+        };
+
+
+      recognition.onend =
+        function() {
+
+          if (
+            document
+              .getElementById("status")
+              .innerText ===
+            "Listening..."
+          ) {
+
+            document
+              .getElementById("status")
+              .innerText =
+                "Ready";
+          }
+        };
+
+
+      recognition.start();
+    }
+
+
+    // --------------------------------------------------
+    // Send recognised speech to Google Apps Script
+    // --------------------------------------------------
+
+    function sendCommand(command) {
+
+      document
+        .getElementById("result")
+        .innerText =
+          "Updating shopping list...";
+
+
+      const callbackName =
+        "shoppingCallback_" +
+        Date.now();
+
+
+      window[callbackName] =
+        function(data) {
+
+          delete window[callbackName];
+          script.remove();
+
+
+          if (
+            data.success === false &&
+            data.error === "Unauthorized"
+          ) {
+
+            clearAccessKey();
+
+            showAccessScreen(
+              "Incorrect family access key."
+            );
+
+            return;
+          }
+
+
+          document
+            .getElementById("result")
+            .innerText =
+              data.result ||
+              "Done";
+
+
+          loadShoppingList();
+        };
+
+
+      const script =
+        document.createElement(
+          "script"
+        );
+
+
+      script.src =
+        SCRIPT_URL +
+        "?command=" +
+        encodeURIComponent(command) +
+        "&key=" +
+        encodeURIComponent(
+          familyAccessKey
+        ) +
+        "&callback=" +
+        callbackName;
+
+
+      script.onerror =
+        function() {
+
+          delete window[callbackName];
+          script.remove();
+
+          document
+            .getElementById("result")
+            .innerText =
+              "Could not update shopping list";
+        };
+
+
+      document
+        .body
+        .appendChild(script);
+    }
+
+
+    // --------------------------------------------------
+    // Load list / verify access key
+    // --------------------------------------------------
+
+    function loadShoppingList(
+      isLoginAttempt = false
+    ) {
+
+      const callbackName =
+        "listCallback_" +
+        Date.now();
+
+
+      window[callbackName] =
+        function(data) {
+
+          delete window[callbackName];
+          script.remove();
+
+
+          // --------------------------------------------
+          // Wrong family key
+          // --------------------------------------------
+
+          if (
+            data.success === false &&
+            data.error === "Unauthorized"
+          ) {
+
+            clearAccessKey();
+
+            showAccessScreen(
+              "Incorrect family access key."
+            );
+
+            return;
+          }
+
+
+          // --------------------------------------------
+          // Unexpected response
+          // --------------------------------------------
+
+          if (
+            data.success !== true
+          ) {
+
+            if (isLoginAttempt) {
+
+              showAccessScreen(
+                "Could not verify family access key."
+              );
+
+            } else {
+
+              document
+                .getElementById(
+                  "shoppingList"
+                )
+                .innerText =
+                  "Could not load shopping list";
+            }
+
+            return;
+          }
+
+
+          // --------------------------------------------
+          // Key is verified
+          // --------------------------------------------
+
+          sessionStorage.setItem(
+            "shoppingFamilyAccessKey",
+            familyAccessKey
+          );
+
+          showApp();
+
+
+          const list =
+            document.getElementById(
+              "shoppingList"
+            );
+
+          list.innerHTML = "";
+
+
+          if (
+            !data.items ||
+            data.items.length === 0
+          ) {
+
+            list.innerText =
+              "Nothing to buy";
+
+          } else {
+
+            for (
+              const item of data.items
+            ) {
+
+              const row =
+                document.createElement(
+                  "div"
+                );
+
+              const checkbox =
+                document.createElement(
+                  "input"
+                );
+
+              checkbox.type =
+                "checkbox";
+
+
+              checkbox.onchange =
+                function() {
+
+                  if (
+                    checkbox.checked
+                  ) {
+                    completeItem(
+                      item
+                    );
+                  }
+                };
+
+
+              const label =
+                document.createElement(
+                  "span"
+                );
+
+              label.innerText =
+                item;
+
+
+              row.appendChild(
+                checkbox
+              );
+
+              row.appendChild(
+                label
+              );
+
+              list.appendChild(
+                row
+              );
+            }
+          }
+        };
+
+
+      const script =
+        document.createElement(
+          "script"
+        );
+
+
+      script.src =
+        SCRIPT_URL +
+        "?action=getList" +
+        "&key=" +
+        encodeURIComponent(
+          familyAccessKey
+        ) +
+        "&callback=" +
+        callbackName;
+
+
+      script.onerror =
+        function() {
+
+          delete window[callbackName];
+          script.remove();
+
+
+          if (isLoginAttempt) {
+
+            showAccessScreen(
+              "Could not verify family access key."
+            );
+
+          } else {
+
+            document
+              .getElementById(
+                "shoppingList"
+              )
+              .innerText =
+                "Could not load shopping list";
+          }
+        };
+
+
+      document
+        .body
+        .appendChild(script);
+    }
+
+
+    // --------------------------------------------------
+    // Complete shopping item
+    // --------------------------------------------------
+
+    function completeItem(item) {
+
+      const callbackName =
+        "completeCallback_" +
+        Date.now();
+
+
+      window[callbackName] =
+        function(data) {
+
+          delete window[callbackName];
+          script.remove();
+
+
+          if (
+            data.success === false &&
+            data.error === "Unauthorized"
+          ) {
+
+            clearAccessKey();
+
+            showAccessScreen(
+              "Incorrect family access key."
+            );
+
+            return;
+          }
+
+
+          if (data.success) {
+            loadShoppingList();
+          }
+        };
+
+
+      const script =
+        document.createElement(
+          "script"
+        );
+
+
+      script.src =
+        SCRIPT_URL +
+        "?action=complete" +
+        "&item=" +
+        encodeURIComponent(item) +
+        "&key=" +
+        encodeURIComponent(
+          familyAccessKey
+        ) +
+        "&callback=" +
+        callbackName;
+
+
+      script.onerror =
+        function() {
+
+          delete window[callbackName];
+          script.remove();
+
+          document
+            .getElementById("result")
+            .innerText =
+              "Could not update item";
+
+          loadShoppingList();
+        };
+
+
+      document
+        .body
+        .appendChild(script);
+    }
+
+
+    // --------------------------------------------------
+    // Initial page load
+    // --------------------------------------------------
+
+    window.addEventListener(
+      "load",
+      function() {
+
+        if (familyAccessKey) {
+
+          // A stored key must still be verified.
+          // Do not reveal the app before verification.
+
+          document
+            .getElementById(
+              "accessMessage"
+            )
+            .innerText =
+              "Checking access key...";
+
+          loadShoppingList(true);
+
+        } else {
+
+          showAccessScreen();
+        }
+      }
+    );
+
+  </script>
+
+</body>
+
+</html>
