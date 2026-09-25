@@ -111,7 +111,38 @@
 
 
 <body>
+<div id="accessSection">
+  <h1>Shopping Voice</h1>
 
+  <p>Enter the family access key.</p>
+
+  <input
+    id="accessKeyInput"
+    type="password"
+    autocomplete="current-password"
+    placeholder="Family access key"
+    style="
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      margin-top: 20px;
+    "
+  >
+
+  <button
+    onclick="saveAccessKey()"
+    style="
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      margin-top: 10px;
+    "
+  >
+    Continue
+  </button>
+</div>
+
+<div id="appSection" style="display:none;">
   <h1>Shopping Voice</h1>
 
   <p>Tap the microphone and speak.</p>
@@ -140,7 +171,48 @@
 
 </div>
 
+</div>
+
+
   <script>
+
+    let familyAccessKey =
+  sessionStorage.getItem(
+    "shoppingFamilyAccessKey"
+  ) || "";
+
+
+function saveAccessKey() {
+
+  const key =
+    document
+      .getElementById("accessKeyInput")
+      .value
+      .trim();
+
+  if (!key) {
+    return;
+  }
+
+  familyAccessKey = key;
+
+  sessionStorage.setItem(
+    "shoppingFamilyAccessKey",
+    key
+  );
+
+  document
+    .getElementById("accessSection")
+    .style.display =
+      "none";
+
+  document
+    .getElementById("appSection")
+    .style.display =
+      "block";
+
+  loadShoppingList();
+}
 
     const SCRIPT_URL =
       "https://script.google.com/macros/s/AKfycbxh83hFWKIbgYIbOaDhqQy9jP6AFeRVZ8K_rkqkZJl6pCWALtV84XZqfPAoTn379xBf/exec";
@@ -284,6 +356,8 @@ function sendCommand(command) {
     SCRIPT_URL +
     "?command=" +
     encodeURIComponent(command) +
+    "&key=" +
+    encodeURIComponent(familyAccessKey) +
     "&callback=" +
     callbackName;
 
@@ -306,6 +380,8 @@ function sendCommand(command) {
     .body
     .appendChild(script);
 }
+
+
 function loadShoppingList() {
 
   const callbackName =
@@ -323,41 +399,80 @@ function loadShoppingList() {
       list.innerHTML = "";
 
       if (
+  data.success === false &&
+  data.error === "Unauthorized"
+) {
+
+  sessionStorage.removeItem(
+    "shoppingFamilyAccessKey"
+  );
+
+  familyAccessKey = "";
+
+  document
+    .getElementById("appSection")
+    .style.display =
+      "none";
+
+  document
+    .getElementById("accessSection")
+    .style.display =
+      "block";
+
+  document
+    .getElementById("accessKeyInput")
+    .value =
+      "";
+
+  alert(
+    "Incorrect family access key"
+  );
+
+  delete window[callbackName];
+
+  script.remove();
+
+  return;
+}
+
+      if (
         !data.items ||
         data.items.length === 0
       ) {
+
         list.innerText =
           "Nothing to buy";
+
       } else {
 
         for (const item of data.items) {
 
-  const row =
-    document.createElement("div");
+          const row =
+            document.createElement("div");
 
-  const checkbox =
-    document.createElement("input");
+          const checkbox =
+            document.createElement("input");
 
-  checkbox.type = "checkbox";
+          checkbox.type = "checkbox";
 
-  checkbox.onchange =
-    function() {
+          checkbox.onchange =
+            function() {
 
-      if (checkbox.checked) {
-        completeItem(item);
-      }
-    };
+              if (checkbox.checked) {
+                completeItem(item);
+              }
+            };
 
-  const label =
-    document.createElement("span");
+          const label =
+            document.createElement("span");
 
-  label.innerText = item;
+          label.innerText = item;
 
-  row.appendChild(checkbox);
-  row.appendChild(label);
+          row.appendChild(checkbox);
+          row.appendChild(label);
 
-  list.appendChild(row);
-}
+          list.appendChild(row);
+        }
       }
 
       delete window[callbackName];
@@ -372,8 +487,11 @@ function loadShoppingList() {
   script.src =
     SCRIPT_URL +
     "?action=getList" +
+    "&key=" +
+    encodeURIComponent(familyAccessKey) +
     "&callback=" +
     callbackName;
+
 
   script.onerror =
     function() {
@@ -392,6 +510,8 @@ function loadShoppingList() {
     .body
     .appendChild(script);
 }
+
+
 function completeItem(item) {
 
   const callbackName =
@@ -419,6 +539,8 @@ function completeItem(item) {
     "?action=complete" +
     "&item=" +
     encodeURIComponent(item) +
+    "&key=" +
+    encodeURIComponent(familyAccessKey) +
     "&callback=" +
     callbackName;
 
@@ -444,9 +566,38 @@ function completeItem(item) {
     .appendChild(script);
 }
 
+
 window.addEventListener(
   "load",
-  loadShoppingList
+  function() {
+
+    if (familyAccessKey) {
+
+      document
+        .getElementById("accessSection")
+        .style.display =
+          "none";
+
+      document
+        .getElementById("appSection")
+        .style.display =
+          "block";
+
+      loadShoppingList();
+
+    } else {
+
+      document
+        .getElementById("accessSection")
+        .style.display =
+          "block";
+
+      document
+        .getElementById("appSection")
+        .style.display =
+          "none";
+    }
+  }
 );
 
   </script>
