@@ -251,7 +251,13 @@
 
       // If already listening, tapping the mic again stops it
       if (isListening && activeRecognition) {
-        activeRecognition.stop();
+        activeRecognition.abort();
+
+        isListening = false;
+        activeRecognition = null;
+
+        document.getElementById("status").innerText = "Ready";
+
         return;
       }
 
@@ -268,6 +274,10 @@
 
 
       const recognition = new SpeechRecognition();
+
+      // Keep a reference so the second tap can stop this session
+      activeRecognition = recognition;
+
       recognition.lang = "en-AU";
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
@@ -302,6 +312,11 @@
 
       recognition.onerror =
         function (event) {
+
+          if (event.error === "aborted") {
+            document.getElementById("status").innerText = "Ready";
+            return;
+          }
 
           document.getElementById("status").innerText = "Error: " + event.error;
 
