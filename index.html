@@ -184,6 +184,9 @@
 
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxh83hFWKIbgYIbOaDhqQy9jP6AFeRVZ8K_rkqkZJl6pCWALtV84XZqfPAoTn379xBf/exec";
 
+    let activeRecognition = null;
+    let isListening = false;
+
     let familyAccessKey = sessionStorage.getItem("shoppingFamilyAccessKey") || "";
 
     // --------------------------------------------------
@@ -246,6 +249,13 @@
 
     function startListening() {
 
+      // If already listening, tapping the mic again stops it
+      if (isListening && activeRecognition) {
+        activeRecognition.stop();
+        return;
+      }
+
+
       const SpeechRecognition =
         window.SpeechRecognition ||
         window.webkitSpeechRecognition;
@@ -261,9 +271,12 @@
       recognition.lang = "en-AU";
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
+      recognition.continuous = false;
 
       recognition.onstart =
         function () {
+
+          isListening = true;
 
           document.getElementById("status").innerText = "Listening...";
           document.getElementById("heard").innerText = "";
@@ -278,6 +291,9 @@
 
           document.getElementById("heard").innerText = text;
           document.getElementById("status").innerText = "Heard:";
+
+          // Stop microphone immediately after recognition
+          recognition.stop();
 
           sendCommand(text);
 
@@ -294,6 +310,9 @@
 
       recognition.onend =
         function () {
+
+          isListening = false;
+          activeRecognition = null;
 
           if (document.getElementById("status").innerText === "Listening...") {
             document.getElementById("status").innerText = "Ready";
